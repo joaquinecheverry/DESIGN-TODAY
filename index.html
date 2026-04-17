@@ -516,180 +516,212 @@
     <button id="print-btn" onclick="window.print()">PRINT / SAVE AS PDF</button>
 
     <script>
-       const images = document.getElementById('images');
-
-const original = Array.from(images.children);
-for (let c = 0; c < 2; c++) {
-    original.forEach(img => {
-        images.appendChild(img.cloneNode(true));
-    });
-}
-
-let autoY = 0;
-const BASE_SPEED = 15;
-let lastScroll = 0;
-
-const progressBar = document.getElementById('progress-bar');
-const essay = document.getElementById('essay');
-
-function getEssayProgress() {
-    const essayTop = essay.offsetTop;
-    const essayHeight = essay.scrollHeight;
-    const scrolled = window.scrollY - essayTop;
-    const viewportH = window.innerHeight;
-    const total = essayHeight - viewportH;
-    return Math.min(Math.max(scrolled / total, 0), 1);
-}
-
-const sections = ['hi','thesis','what','misused','expectations','political','nation','anger','revolt','manifesting','colophon','print-btn'];
-
-function updateActiveNav() {
-    let current = sections[0];
-    for (const id of sections) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.3) {
-            current = id;
+        // Add lazy loading to all images
+        document.querySelectorAll('#images img').forEach(img => {
+            img.loading = 'lazy';
+        });
+        
+        const images = document.getElementById('images');
+        
+        const original = Array.from(images.children);
+        for (let c = 0; c < 2; c++) {
+            original.forEach(img => {
+                images.appendChild(img.cloneNode(true));
+            });
         }
-    }
-    document.querySelectorAll('#nav p[data-target]').forEach(p => {
-        p.classList.toggle('active', p.dataset.target === current);
-    });
-}
-
-window.addEventListener('scroll', () => {
-    lastScroll = window.scrollY;
-    progressBar.style.width = (getEssayProgress() * 100) + '%';
-    updateActiveNav();
-});
-
-function getTotalImagesHeight() {
-    let height = 0;
-    for (let i = 0; i < original.length; i++) {
-        height += images.children[i].offsetHeight + 20;
-    }
-    return height;
-}
-
-function animate() {
-    autoY -= BASE_SPEED;
-    const loopHeight = getTotalImagesHeight();
-    if (loopHeight > 0 && autoY <= -loopHeight) {
-        autoY += loopHeight;
-    }
-    images.style.transform = `translateY(${autoY}px)`;
-    requestAnimationFrame(animate);
-}
-
-// SOUND SETUP
-const effectLowpass = new Tone.Filter({
-    frequency: 200,
-    type: "lowpass",
-    rolloff: -24
-}).toDestination();
-
-const synthHover = new Tone.MembraneSynth({
-    envelope: {
-        attack: 0.001,
-        attackCurve: "exponential",
-        decay: 0.1,
-        release: 1.4,
-        sustain: 0.01,
-    },
-    octaves: 30,
-    oscillator: { type: "sine" },
-    pitchDecay: 0.03,
-}).connect(effectLowpass);
-
-const hitmarkVolume = new Tone.Volume(-15).toDestination();
-const hitmark = new Tone.Player({
-    url: "hitmark.mp3",
-    autostart: false,
-}).connect(hitmarkVolume);
-
-document.querySelectorAll('#nav p[data-target]').forEach(navItem => {
-    navItem.addEventListener('mouseenter', async () => {
-        await Tone.start();
-        synthHover.triggerAttackRelease("C1", "8n");
-    });
-
-    navItem.addEventListener('click', async () => {
-        await Tone.start();
-        hitmark.stop();
-        hitmark.start();
-
-        const target = document.getElementById(navItem.dataset.target);
-        if (!target) return;
-
-        const flash = document.createElement('div');
-        flash.style.cssText = `
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            pointer-events: none;
-        `;
-        document.body.appendChild(flash);
-
-        const sequence = [
-            { color: 'black', duration: 100 },
-            { color: 'yellow', duration: 100 },
-            { color: 'red', duration: 100 },
-            { color: 'black', duration: 50 }
-        ];
-
-        for (const frame of sequence) {
-            flash.style.background = frame.color;
-            await new Promise(r => setTimeout(r, frame.duration));
+        
+        let autoY = 0;
+        const BASE_SPEED = 15;
+        let lastScroll = 0;
+        
+        const progressBar = document.getElementById('progress-bar');
+        const essay = document.getElementById('essay');
+        
+        function getEssayProgress() {
+            const essayTop = essay.offsetTop;
+            const essayHeight = essay.scrollHeight;
+            const scrolled = window.scrollY - essayTop;
+            const viewportH = window.innerHeight;
+            const total = essayHeight - viewportH;
+            return Math.min(Math.max(scrolled / total, 0), 1);
         }
-
-        target.scrollIntoView();
-
-        flash.style.transition = 'opacity 0.0001s';
-        flash.style.opacity = '0';
-        await new Promise(r => setTimeout(r, 10));
-        flash.remove();
-    });
-});
-
-updateActiveNav();
-animate();
-
-const loadItems = [
-    ...document.querySelectorAll('#nav p'),
-    document.getElementById('print-btn'),
-].filter(Boolean);
-
-loadItems.forEach((el, i) => {
-    setTimeout(() => {
-        el.classList.add('loaded');
-    }, i * 120);
-});
-
-// AUTOSCROLL
-let autoscrollActive = false;
-let autoscrollRAF = null;
-const AUTOSCROLL_SPEED = 2.2;
-
-function autoscrollStep() {
-    window.scrollBy(0, AUTOSCROLL_SPEED);
-    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 10) {
-        autoscrollActive = false;
-        return;
-    }
-    if (autoscrollActive) autoscrollRAF = requestAnimationFrame(autoscrollStep);
-}
-
-setTimeout(() => {
-    autoscrollActive = true;
-    autoscrollRAF = requestAnimationFrame(autoscrollStep);
-}, 3000);
-
-window.addEventListener('wheel', () => {
-    if (autoscrollActive) {
-        autoscrollActive = false;
-        cancelAnimationFrame(autoscrollRAF);
-    }
-}, { passive: true });
-    </script>
+        
+        const sections = ['hi','thesis','what','misused','expectations','political','nation','anger','revolt','manifesting','colophon','print-btn'];
+        
+        function updateActiveNav() {
+            let current = sections[0];
+            for (const id of sections) {
+                const el = document.getElementById(id);
+                if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.3) {
+                    current = id;
+                }
+            }
+            document.querySelectorAll('#nav p[data-target]').forEach(p => {
+                p.classList.toggle('active', p.dataset.target === current);
+            });
+        }
+        
+        window.addEventListener('scroll', () => {
+            lastScroll = window.scrollY;
+            progressBar.style.width = (getEssayProgress() * 100) + '%';
+            updateActiveNav();
+        });
+        
+        function getTotalImagesHeight() {
+            let height = 0;
+            for (let i = 0; i < original.length; i++) {
+                height += images.children[i].offsetHeight + 20;
+            }
+            return height;
+        }
+        
+        const isMobile = window.innerWidth <= 768;
+        
+        function animate() {
+            autoY -= BASE_SPEED;
+            const loopHeight = getTotalImagesHeight();
+            if (loopHeight > 0 && autoY <= -loopHeight) {
+                autoY += loopHeight;
+            }
+            images.style.transform = `translateY(${autoY}px)`;
+            requestAnimationFrame(animate);
+        }
+        
+        // Only run image animation on desktop
+        if (!isMobile) {
+            animate();
+        }
+        
+        // SOUND SETUP
+        const effectLowpass = new Tone.Filter({
+            frequency: 200,
+            type: "lowpass",
+            rolloff: -24
+        }).toDestination();
+        
+        const synthHover = new Tone.MembraneSynth({
+            envelope: {
+                attack: 0.001,
+                attackCurve: "exponential",
+                decay: 0.1,
+                release: 1.4,
+                sustain: 0.01,
+            },
+            octaves: 30,
+            oscillator: { type: "sine" },
+            pitchDecay: 0.03,
+        }).connect(effectLowpass);
+        
+        const hitmarkVolume = new Tone.Volume(-15).toDestination();
+        const hitmark = new Tone.Player({
+            url: "hitmark.mp3",
+            autostart: false,
+        }).connect(hitmarkVolume);
+        
+        document.querySelectorAll('#nav p[data-target]').forEach(navItem => {
+            navItem.addEventListener('mouseenter', async () => {
+                await Tone.start();
+                synthHover.triggerAttackRelease("C1", "8n");
+            });
+        
+            navItem.addEventListener('click', async () => {
+                await Tone.start();
+                hitmark.stop();
+                hitmark.start();
+        
+                const target = document.getElementById(navItem.dataset.target);
+                if (!target) return;
+        
+                // Skip flash animation on mobile — too janky
+                if (isMobile) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+        
+                    // Close nav on mobile after clicking
+                    const nav = document.getElementById('nav');
+                    if (nav) nav.classList.remove('open');
+                    return;
+                }
+        
+                const flash = document.createElement('div');
+                flash.style.cssText = `
+                    position: fixed;
+                    inset: 0;
+                    z-index: 9999;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(flash);
+        
+                const sequence = [
+                    { color: 'black', duration: 100 },
+                    { color: 'yellow', duration: 100 },
+                    { color: 'red', duration: 100 },
+                    { color: 'black', duration: 50 }
+                ];
+        
+                for (const frame of sequence) {
+                    flash.style.background = frame.color;
+                    await new Promise(r => setTimeout(r, frame.duration));
+                }
+        
+                target.scrollIntoView();
+        
+                flash.style.transition = 'opacity 0.0001s';
+                flash.style.opacity = '0';
+                await new Promise(r => setTimeout(r, 10));
+                flash.remove();
+            });
+        });
+        
+        updateActiveNav();
+        
+        const loadItems = [
+            ...document.querySelectorAll('#nav p'),
+            document.getElementById('print-btn'),
+        ].filter(Boolean);
+        
+        loadItems.forEach((el, i) => {
+            setTimeout(() => {
+                el.classList.add('loaded');
+            }, i * 120);
+        });
+        
+        // AUTOSCROLL — desktop only
+        let autoscrollActive = false;
+        let autoscrollRAF = null;
+        const AUTOSCROLL_SPEED = 2.2;
+        
+        function autoscrollStep() {
+            window.scrollBy(0, AUTOSCROLL_SPEED);
+            if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 10) {
+                autoscrollActive = false;
+                return;
+            }
+            if (autoscrollActive) autoscrollRAF = requestAnimationFrame(autoscrollStep);
+        }
+        
+        if (!isMobile) {
+            setTimeout(() => {
+                autoscrollActive = true;
+                autoscrollRAF = requestAnimationFrame(autoscrollStep);
+            }, 3000);
+        }
+        
+        window.addEventListener('wheel', () => {
+            if (autoscrollActive) {
+                autoscrollActive = false;
+                cancelAnimationFrame(autoscrollRAF);
+            }
+        }, { passive: true });
+        
+        // Mobile nav toggle
+        const navToggle = document.getElementById('nav-toggle');
+        const nav = document.getElementById('nav');
+        if (navToggle && nav) {
+            navToggle.addEventListener('click', () => {
+                nav.classList.toggle('open');
+            });
+        }
+        </script>
 </body>
 
 </html>
