@@ -297,3 +297,26 @@ a, button, #nav p, [data-target], [onclick] {
     -webkit-text-stroke: 4pt black;
     paint-order: stroke fill;
 }
+
+@media (max-width: 768px) {
+    #images {
+        display: none !important; /* hide background images on mobile — they cause the glitch */
+    }
+
+    body {
+        background: black; /* replace with solid bg on mobile */
+    }
+
+    #essay {
+        font-size: 42pt !important;
+        -webkit-text-stroke: 4pt black !important;
+        width: 90vw !important;
+        /* remove the drop-shadow filter on mobile — it's expensive */
+        filter: none !important;
+    }
+
+    #print-btn {
+        font-size: 36pt !important;
+        filter: none !important;
+    }
+}
